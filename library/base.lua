@@ -11,3 +11,4 @@
 function readfile(sourceName) end
 
 
+CloseDesyncAlert=false

@@ -1,3 +1,19 @@
 {
-    "name"    : "shadylibs"
+    "$schema": "https://raw.githubusercontent.com/LuaLS/LLS-Addons/main/schemas/addon_config.schema.json",
+    "name"    : "shadylibs",
+    
+    // Lua string patterns to look for in a workspace.
+    // If detected, this addon will be recommended to enable
+    "words": ["memory", "loader", "battle", "gui", "resource", "soku"],
+
+    // Lua string patterns to look for in filenames.
+    // If detected, this addon will be recommended to enable
+    "files": ["init.lua"],
+
+    // List of settings to apply when this addon is enabled
+    "settings": {
+        "Lua.diagnostics.globals" : [
+            "AtExit", "CloseDesyncAlert"
+        ]
+    }
 }

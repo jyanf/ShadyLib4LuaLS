@@ -454,7 +454,7 @@ battle.Manager = {}
 ---@nodiscard
 function battle.random(maxPlusOne) end
 
----@alias cbp1 fun(actId: integer, player: battlelib.Player, data: table): boolean?
+---@alias cbp1 fun(player: battlelib.Player, actId: integer, data: table): boolean?
 ---@alias cbp2 fun(player: battlelib.Player, data: table)
 ---附加角色逻辑
 ---@param char sokulib.Character 目标角色
@@ -463,7 +463,7 @@ function battle.random(maxPlusOne) end
 ---@param initialize?   cbp2? 开局回调
 function battle.replaceCharacter(char, update, initAction, initialize) end
 ---
----@alias cbo1 fun(actId: integer, obj: battlelib.Object, data: table): boolean?
+---@alias cbo1 fun(obj: battlelib.Object, actId: integer, data: table): boolean?
 ---@alias cbo2 fun(obj: battlelib.Object, data: table)
 ---附加物体逻辑
 ---@param char sokulib.Character 目标角色

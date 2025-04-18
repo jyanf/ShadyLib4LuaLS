@@ -121,12 +121,12 @@ function memory.createvirtualcall(index, argc) end
 ---@field edi integer
 memory.CPUState = {}
 
----@alias ccb fun(state: memorylib.CPUState, ...: integer): integer?
+---@alias ccb fun(state: memorylib.CPUState, ...: integer): integer|boolean?
 ---
 ---回调处理器
 ---@class memorylib.Callback
 ---@field enabled boolean 回调是否启用
----@overload fun(state: memorylib.CPUState, sargs...: integer): integer?
+---@overload fun(state: memorylib.CPUState, sargs...: integer): integer|boolean?
 memory.Callback = {}
 
 ---回调调用接口
