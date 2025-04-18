@@ -10,5 +10,5 @@
 ---@nodiscard
 function readfile(sourceName) end
 
-
+---@type boolean 关闭battle.replace等函数的不同步警告
 CloseDesyncAlert=false
