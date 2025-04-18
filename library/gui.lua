@@ -21,6 +21,7 @@ gui.Font = {}
 
 ---构造函数
 ---@return guilib.Font
+---@nodiscard
 function gui.Font() end
 
 ---
@@ -111,6 +112,12 @@ function gui.Cursor:setRange(x, y, dx, dy) end
 ---@field y integer Y坐标
 ---@field isActive boolean 激活状态
 gui.DesignObject = {}
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return guilib.DesignObject
+---@nodiscard
+function gui.DesignObject.fromPtr(ptr) end
 
 ---
 ---设置对象颜色
@@ -127,6 +134,17 @@ function gui.DesignObject:getValueControl() end
 ---界面设计管理器
 ---@class guilib.Design
 gui.Design = {}
+---
+---构造函数
+---@return guilib.Design
+---@nodiscard
+function gui.Design() end
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return guilib.Design
+---@nodiscard
+function gui.Design.fromPtr(ptr) end
 
 ---
 ---加载布局文件
@@ -308,7 +326,12 @@ function gui.Renderer:destroy(object) end
 ---@field change integer 切卡键计数
 ---@field spell integer 符卡键计数
 gui.KeyInput = {}
-
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return guilib.KeyInput
+---@nodiscard
+function gui.KeyInput.fromPtr(ptr) end
 
 ---Scene对象
 ---@class guilib.Scene

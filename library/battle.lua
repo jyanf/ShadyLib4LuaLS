@@ -13,7 +13,6 @@ battle = {}
 -- 基础数据结构
 ----------------------------
 
----
 ---玩家基本信息
 ---@class battlelib.PlayerInfo
 ---@field character sokulib.Character 角色号（只读）
@@ -24,12 +23,14 @@ battle = {}
 ---@field deckId integer 卡组ID（只读）
 ---@field inputType integer 角色控制类型
 battle.PlayerInfo = {}
-
-----------------------------
--- 游戏参数类
-----------------------------
-
 ---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.PlayerInfo
+---@nodiscard
+function battle.PlayerInfo.fromPtr(ptr) end
+
+
 ---对局参数
 ---@class battlelib.GameParams
 ---@field difficulty integer 难度等级
@@ -39,8 +40,14 @@ battle.PlayerInfo = {}
 ---@field player2 battlelib.PlayerInfo 玩家2信息
 ---@field randomSeed integer 随机种子（只读）
 battle.GameParams = {}
-
 ---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.GameParams
+---@nodiscard
+function battle.GameParams.fromPtr(ptr) end
+
+
 ---物体渲染参数
 ---@class battlelib.RenderInfo
 ---@field color integer ARGB格式颜色值
@@ -51,10 +58,17 @@ battle.GameParams = {}
 ---@field yRotation number Y轴旋转角
 ---@field zRotation number Z轴旋转角
 battle.RenderInfo = {}
-
+---
 ---构造函数
 ---@return battlelib.RenderInfo
+---@nodiscard
 function battle.RenderInfo() end
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.RenderInfo
+---@nodiscard
+function battle.RenderInfo.fromPtr(ptr) end
 
 
 
@@ -83,6 +97,12 @@ function battle.RenderInfo() end
 ---@field hitStop integer hitstop帧数
 ---@field groundHeight number 查询所处x位置的地面高度
 battle.ObjectBase = {}
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.ObjectBase
+---@nodiscard
+function battle.ObjectBase.fromPtr(ptr) end
 
 ---
 ---创建特效
@@ -154,6 +174,12 @@ function battle.ObjectBase:setHitBoxData(left, top, right, bottom, angle, anchor
 ---@field parentObjectB battlelib.Object? 父物体（如果有）
 ---@field parentPlayerB battlelib.Player? 父玩家（如果有）
 battle.Object = {}
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.Object
+---@nodiscard
+function battle.Object.fromPtr(ptr) end
 
 ---
 ---创建对战物体
@@ -241,11 +267,17 @@ function battle.Object:getCustomData(count) end
 ---@field healCharmTimer integer 护符回血剩余帧数
 ---@field handCount integer 当前手卡数量（只读）
 battle.Player = {}
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.Player
+---@nodiscard
+function battle.Player.fromPtr(ptr) end
 
 ----------------------------
----通用处理
+    ---通用处理
 ----------------------------
-
+---
 ---处理地面更新
 ---@return boolean 是否因地形变化离地
 function battle.Player:applyGroundMechanics() end
@@ -271,7 +303,7 @@ function battle.Player:unknown487C20() end
 function battle.Player:checkTurnAround() end
 
 ----------------------------
--- 输入与动作系统
+    --- 输入与动作系统
 ----------------------------
 ---
 ---获取招式取消级
@@ -334,10 +366,11 @@ function battle.Player:handleCardSwitch() end
 ---
 ---刷新输入缓冲相关
 function battle.Player:unknown46d950() end
-----------------------------
--- 卡杀系统
-----------------------------
 
+----------------------------
+    --- 卡杀系统
+----------------------------
+---
 ---获取手卡ID
 ---@param index integer 手卡索引
 ---@return integer 卡牌ID
@@ -383,7 +416,7 @@ function battle.Player:useSkill(actionId, actionLock) end
 function battle.Player:eventSkillUse() end
 
 ----------------------------
----弹幕创建相关
+    ---弹幕创建相关
 ----------------------------
 ---
 ---计算射击角度，存入field0x7f0
@@ -441,13 +474,18 @@ function battle.Player:eventWeatherCycle() end
 ---@field frameCount integer 当前阶段帧数（只读）
 ---@field matchState integer 对局阶段（只读）
 battle.Manager = {}
-
+---
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.Manager
+---@nodiscard
+function battle.Manager.fromPtr(ptr) end
 
 
 ----------------------------
--- 全局函数
+--- 全局函数
 ----------------------------
-
+---
 ---生成随机整数（基于对战种子）
 ---@param maxPlusOne integer 随机范围限制（负数为不限）
 ---@return integer [0, maxPlusOne)范围内的随机整数
