@@ -38,7 +38,7 @@ function gui.Font:setColor(color1, color2) end
 ---
 ---加载字体文件
 ---@param fileName string 字体文件路径
----@return integer 加载状态
+---@return integer 加载状态 
 function gui.Font.loadFontFile(fileName) end
 
 
@@ -81,23 +81,47 @@ function gui.Sprite:setText(text, font, w, h, layer) end
 ---光标控制类
 ---@class guilib.Cursor
 ---@field isActive boolean 是否激活
+---@field isVisible boolean 是否渲染光标（绿条）
+---@field sfxId integer 移动时的音效ID（-1即无音效）
+---@field max integer 最大索引（槽位数，只读）
+---
 ---@field index integer 当前索引
+---@field page integer 当前页面位置（只读，随页面滚动变化）
 gui.Cursor = {}
 
----设置光标位置
----@param index integer 索引编号
+---获取槽位位置
+---@param index integer 索引
+---@return integer 位置坐标x _
+---@return integer 位置坐标y _
+---@nodiscard
+function gui.Cursor:getPosition(index) end
+---
+---设置槽位位置
+---@param index integer 索引
 ---@param x integer X坐标
 ---@param y integer Y坐标
 function gui.Cursor:setPosition(index, x, y) end
-
+---
 ---设置移动范围
 ---@param x integer 起始X
 ---@param y integer 起始Y
 ---@param dx integer 横向移动量
 ---@param dy integer 纵向移动量
 function gui.Cursor:setRange(x, y, dx, dy) end
-
-
+---
+---设置页面宽度
+---<br>大于0时，表示启用页面模式，可以滚动及翻页，光标位置由page和index同时决定
+---<br>相反，等于0时关闭页面模式，光标位置仅由index决定
+---@param rows integer 页面宽度（槽位数）
+function gui.Cursor:setPageRows(rows) end
+---
+---主动向前翻页一次
+---<br>page和index会减去pageRows（越过0则循环）
+function gui.Cursor:pgUp() end
+---
+---主动向后翻页一次
+---<br>page和index会加上pageRows（越过max则循环）
+function gui.Cursor:pgDn() end
 
 ---值联合类型
 ---@class guilib.DesignValue
@@ -247,8 +271,16 @@ function gui.EffectManager:clearEffects() end
 ---@field design guilib.Design 界面设计系统
 ---@field effects guilib.EffectManager 特效管理系统
 ---@field isActive boolean 渲染器启用状态
-gui.Renderer = {}
-
+---
+---@field showResult integer 对话框的**当帧**响应结果 <br>枚举值：<br>MSG_CLOSED=-1 <br>MSG_WAIT=0 <br>MSG_OK=1 <br>MSG_CANCEL=2 <br>MSG_YES=3 <br>MSG_NO=4
+gui.Renderer = {
+    MSG_CLOSED = -1, --未打开对话框
+    MSG_WAIT = 0, --等待对话框确认
+    MSG_OK = 1, --已确认
+    MSG_CANCEL = 2, --已取消
+    MSG_YES = 3, --已选择“是”
+    MSG_NO = 4, --已选择“否”
+}
 ---
 ---创建精灵对象
 ---@param texturePath string 纹理路径
@@ -262,7 +294,6 @@ gui.Renderer = {}
 ---@return guilib.Sprite
 ---@nodiscard
 function gui.Renderer:createSprite(texturePath, x, y, w, h, ax, ay, layer) end
-
 ---
 ---创建文本精灵对象
 ---@param text string 显示文本
@@ -273,7 +304,6 @@ function gui.Renderer:createSprite(texturePath, x, y, w, h, ax, ay, layer) end
 ---@return guilib.Sprite
 ---@nodiscard
 function gui.Renderer:createText(text, font, w, h, layer) end
-
 ---
 ---创建特效实例
 ---@param id integer 特效patID（需先通过EffectManager加载）
@@ -284,7 +314,6 @@ function gui.Renderer:createText(text, font, w, h, layer) end
 ---@return guilib.Effect
 ---@nodiscard
 function gui.Renderer:createEffect(id, x, y, direction, layer) end
-
 ---
 ---创建水平方向光标
 ---@param width integer 光标宽度（像素）
@@ -293,16 +322,14 @@ function gui.Renderer:createEffect(id, x, y, direction, layer) end
 ---@return guilib.Cursor
 ---@nodiscard
 function gui.Renderer:createCursorH(width, max, pos) end
-
 ---
 ---创建垂直方向光标
----@param width integer 光标高度（像素）
+---@param width integer 光标宽度（像素）
 ---@param max? integer 总槽位数（至少为1）
 ---@param pos? integer 初始位置索引[0, max)
 ---@return guilib.Cursor
 ---@nodiscard
 function gui.Renderer:createCursorV(width, max, pos) end
-
 ---
 ---可销毁对象联合类型
 ---@alias guilib.destroyable 
@@ -311,12 +338,23 @@ function gui.Renderer:createCursorV(width, max, pos) end
 ---| guilib.Effect #特效对象
 ---
 ---销毁图形对象
----@param object guilib.destroyable 需销毁的对象
-function gui.Renderer:destroy(object) end
+---@param ... guilib.destroyable 需销毁的对象（们）
+function gui.Renderer:destroy(...) end
+---
+---显示对话框（测试功能）
+---@param text string 显示文本
+---@return boolean 是否成功 （与其他脚本的对话框冲突则失败） 
+function gui.Renderer:ShowMessage(text) end
+---
+---显示带有选择的对话框（测试功能）
+---@param text string 显示文本
+---@param defaultYes boolean 是否默认指向“是”
+---@return boolean 是否成功 （与其他脚本的对话框冲突则失败）
+function gui.Renderer:ShowChoice(text, defaultYes) end
 
 
----输入帧计数
----@class guilib.KeyInput
+---输入帧计数·对战
+---@class guilib.KeyInputLight
 ---@field axisH integer 水平轴计数
 ---@field axisV integer 垂直轴计数
 ---@field a integer A键计数
@@ -325,13 +363,23 @@ function gui.Renderer:destroy(object) end
 ---@field d integer D键计数
 ---@field change integer 切卡键计数
 ---@field spell integer 符卡键计数
-gui.KeyInput = {}
+gui.KeyInputLight = {}
+---从指针建立
+---@param ptr integer 指针地址
+---@return guilib.KeyInputLight
+---@nodiscard
+function gui.KeyInputLight.fromPtr(ptr) end
 ---
+---输入帧计数·完整
+---@class guilib.KeyInput : guilib.KeyInputLight
+---@field pause integer 暂停键计数
+---@field enter integer 确认键（手柄）计数
+gui.KeyInput = {}
 ---从指针建立
 ---@param ptr integer 指针地址
 ---@return guilib.KeyInput
 ---@nodiscard
-function gui.KeyInput.fromPtr(ptr) end
+function gui.KeyInput.fromPtr(ptr) end  
 
 ---Scene对象
 ---@class guilib.Scene

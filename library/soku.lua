@@ -23,6 +23,20 @@ soku = {}
 ----------------------------
 
 ---
+-----对战阶段枚举
+---@enum sokulib.BattleEvent
+soku.BattleEvent = {
+    GameStart = 0,      -- 游戏启动完成
+    RoundPreStart = 1,  -- 回合预备
+    RoundStart = 2,     -- 回合开始
+    RoundEnd = 3,       -- 回合结束
+    --Stop = 4
+    GameEnd = 5,        -- 对局结束
+    EndScreen = 6,      -- 对话
+    ResultScreen = 7    -- 结算卡片
+}
+
+---
 ---角色枚举
 ---@enum sokulib.Character
 soku.Character = {
@@ -124,9 +138,19 @@ soku.CollisionType = {
 
 ---
 ---二维向量类
+---<br>2.9+添加四则运算支持：
+---<br>表达式示例：v1+v2, v1-v2, 5-v1, -v2, v1*2, 2*v2, v1/2, v1==v2
+---<br>添加__tostring支持，可直接print
 ---@class sokulib.Vector2f
 ---@field x number X坐标
 ---@field y number Y坐标
+---@operator add(sokulib.Vector2f|number): sokulib.Vector2f
+---@operator sub(sokulib.Vector2f|number): sokulib.Vector2f
+---@operator mul(number): sokulib.Vector2f
+---@operator div(number): sokulib.Vector2f
+---@operator unm: sokulib.Vector2f
+----@operator eq(sokulib.Vector2f): boolean
+----@operator tostring(): string
 soku.Vector2f = {}
 
 ---构造函数
@@ -135,11 +159,36 @@ soku.Vector2f = {}
 ---@return sokulib.Vector2f
 ---@nodiscard
 function soku.Vector2f(x, y) end
-
-
-----------------------------
--- 函数定义
-----------------------------
+---从指针建立
+---@param ptr integer 指针地址
+---@return sokulib.Vector2f
+---@nodiscard
+function soku.Vector2f.fromPtr(ptr) end
+---
+---计算向量模长
+---@return number 长度
+function soku.Vector2f:length() end
+---
+---计算向量角度
+---@return number 角度 （-180~180）
+function soku.Vector2f:angle() end
+---
+---旋转向量
+---@param angle number 旋转角度
+---@param center sokulib.Vector2f 旋转中心
+function soku.Vector2f:rotate(angle, center) end
+---
+---计算二维叉积
+---@param s sokulib.Vector2f 向量
+---@param v sokulib.Vector2f 另一个向量
+---@return number 叉积结果 （s.x*v.y - s.y*v.x）
+function soku.Vector2f.cross(s, v) end
+---
+---计算向量点乘
+---@param s sokulib.Vector2f 向量
+---@param v sokulib.Vector2f 另一个向量
+---@return number 点乘结果 （s.x*v.x + s.y*v.y）
+function soku.Vector2f.dot(s, v) end
 
 ---
 ---检查功能键按下当帧
@@ -153,6 +202,13 @@ function soku.checkFKey(keyId) end
 ---@param sfxId integer 音效ID
 function soku.playSE(sfxId) end
 soku.playSFX = soku.playSE -- 别名支持
+
+---
+---播放BGM/停止当前BGM
+---@param bgmPath? string|nil BGM文件路径（留空以停止播放）
+---@param fadeOut? integer 渐出时间（帧数，默认1000）
+---@param fadeIn? integer 渐入时间（帧数，默认500）
+function soku.playBGM(bgmPath, fadeIn, fadeOut) end
 
 ---
 ---获取角色名称

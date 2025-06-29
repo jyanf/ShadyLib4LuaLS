@@ -75,11 +75,13 @@ function battle.RenderInfo.fromPtr(ptr) end
 ---对战物体基类
 ---@class battlelib.ObjectBase
 ---@field ptr integer 内存指针
+---@field center sokulib.Vector2f （缩放和旋转的）相对中心
 ---@field position sokulib.Vector2f 场地/屏幕位置坐标
 ---@field speed sokulib.Vector2f 当前运动速度
 ---@field gravity sokulib.Vector2f 重力加速度
 ---@field direction integer 面向方向（1=右，-1=左）
 ---@field renderInfo battlelib.RenderInfo 物体渲染参数
+---@field isGui boolean 是否为GUI物体（按屏幕坐标渲染）
 ---@field collisionType sokulib.CollisionType 当前判定类型
 ---@field collisionLimit integer 剩余判定次数
 ---@field actionId integer 当前动作ID
@@ -89,13 +91,17 @@ function battle.RenderInfo.fromPtr(ptr) end
 ---@field currentFrame integer 序列停留帧数
 ---@field sequenceSize integer 序列pose总数
 ---@field poseDuration integer 当前pose时长
+---@field hp integer 当前生命值
+---@field maxHp integer 生命上限
+---@field skillIndex integer 必杀索引，用于计算必杀等级的增伤
+---@field hitStop integer hitstop帧数
+---@field groundHeight number 查询所处x位置的地面高度
+---
 ---@field opponent battlelib.Player 引用对手
 ---@field owner battlelib.Player 引用归属玩家
 ---@field ally battlelib.Player 引用友方（反射弹幕相关）
----@field hp integer 当前生命值
----@field maxHp integer 生命上限
----@field hitStop integer hitstop帧数
----@field groundHeight number 查询所处x位置的地面高度
+---@field shadowOn boolean 是否启用场景效果（影子/反光）
+---@field shadowOffset number 影子的纵向偏移（启用后默认-6）
 battle.ObjectBase = {}
 ---
 ---从指针建立
@@ -107,9 +113,9 @@ function battle.ObjectBase.fromPtr(ptr) end
 ---
 ---创建特效
 ---@param id integer 特效ID
----@param x number X坐标
----@param y number Y坐标
----@param direction? integer 生成方向（1=右，-1=左，默认1）
+---@param x number X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认1）
 ---@param layer? integer 渲染层级（默认1）
 ---@return guilib.Effect
 function battle.ObjectBase:createEffect(id, x, y, direction, layer) end
@@ -171,8 +177,13 @@ function battle.ObjectBase:setHitBoxData(left, top, right, bottom, angle, anchor
 ---对战物体
 ---@class battlelib.Object : battlelib.ObjectBase
 ---@field lifetime integer 是否存活（0=立即销毁，1=存活）
+---@field layer integer 相对于角色的渲染图层（1=角色前景，-1=角色背景）
 ---@field parentObjectB battlelib.Object? 父物体（如果有）
 ---@field parentPlayerB battlelib.Player? 父玩家（如果有）
+---
+---@field customData table<integer, number> 自定义数据（float数组）索引1~n <br>警告：最大索引不定，因此请确认索引无误
+---@field gpShort integer[] 整型通用计数器（short数组）索引1~6
+---@field gpFloat number[] 浮点型通用计数器（float数组）索引1~3
 battle.Object = {}
 ---
 ---从指针建立
@@ -184,24 +195,24 @@ function battle.Object.fromPtr(ptr) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number X坐标
----@param y number Y坐标
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认1）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
----@param customData string ！！初始化数据
+---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
 function battle.Object:createObject(actionId, x, y, direction, layer, customData) end
 
 ---
 ---创建子物体（配合getChildrenB/parentObjectB）
----@param id integer 物体动作ID
----@param x number X坐标
----@param y number Y坐标
+---@param actionId integer 物体动作ID
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认1）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
----@param customData string ！！初始化数据
+---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
-function battle.Object:createChild(id, x, y, direction, layer, customData) end
+function battle.Object:createChild(actionId, x, y, direction, layer, customData) end
 ---
 ---获取所有子对象的列表
 ---@return table<integer, battlelib.Object> 子对象表
@@ -220,12 +231,12 @@ function battle.Object:checkProjectileHit(collisionDensity) end
 
 ---
 ---处理受击时散落天气玉（仍需手动消除弹幕）
----@param onlyAirHit boolean 仅吹飞时消失
+---@param onlyAirHit boolean 是否仅在被吹飞时消失
 ---@param bigCrystals integer 生成大水晶数量
 ---@param smallCrystals integer 生成小水晶数量
 ---@param offsetX? number 生成位置X轴偏移（默认0）
 ---@param offsetY? number 生成位置Y轴偏移（默认0）
----@return boolean 是否发生受击
+---@return boolean 是否应消除
 function battle.Object:checkTurnIntoCrystal(onlyAirHit, bigCrystals, smallCrystals, offsetX, offsetY) end
 
 ---
@@ -247,6 +258,10 @@ function battle.Object:getCustomData(count) end
 ---角色控制类
 ---@class battlelib.Player : battlelib.ObjectBase
 ---@field character sokulib.Character 角色号（只读）
+---@field teamId integer 阵营ID（1P=0，2P=1）
+---@field isRight integer 是否右方（1P=0，2P=1）
+---@field paletteId integer 配色号（0~7, 只读）
+---
 ---@field spellStopCounter integer 设置符卡发动时停
 ---@field groundDashCount integer 地面冲刺计时
 ---@field airDashCount integer 空中冲刺次数
@@ -266,6 +281,11 @@ function battle.Object:getCustomData(count) end
 ---@field SORDebuffTimer integer 天气封印剩余帧数
 ---@field healCharmTimer integer 护符回血剩余帧数
 ---@field handCount integer 当前手卡数量（只读）
+---
+---@field input guilib.KeyInputLight 对战输入计数
+---@field inputBuffered guilib.KeyInputLight 对战输入计数（缓冲）
+---@field gpShort integer[] 整型通用计数器（short数组）索引1~6
+---@field gpFloat number[] 浮点型通用计数器（float数组）索引1~6
 battle.Player = {}
 ---
 ---从指针建立
@@ -430,11 +450,11 @@ function battle.Player:updateAirMovement(a1, a2) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number X坐标
----@param y number Y坐标
----@param direction? integer 生成方向（1=右，-1=左，默认1）
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认1）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
----@param customData string ！！初始化数据
+---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
 function battle.Player:createObject(actionId, x, y, direction, layer, customData) end
 ---
@@ -507,8 +527,7 @@ function battle.replaceCharacter(char, update, initAction, initialize) end
 ---@param char sokulib.Character 目标角色
 ---@param update?       cbo1? 物体更新回调
 ---@param initAction?   cbo1? 物体初始化回调
----@param initialize?   cbo2? 开局回调
-function battle.replaceObjects(char, update, initAction, initialize) end
+function battle.replaceObjects(char, update, initAction) end
 
 
 

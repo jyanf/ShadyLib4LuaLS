@@ -174,4 +174,18 @@ function memory.setIPC(name, callback) end
 ---@nodiscard
 function memory.getIPC(name) end
 
+----------------------------
+-- 内存分配器
+----------------------------
+---
+---@param size integer 分配内存字节数
+---@return integer 分配的内存地址
+---@nodiscard
+function memory.new(size) end
+---
+---@param addr integer 待释放的内存地址
+function memory.delete(addr) end
+
+
+
 return memory
