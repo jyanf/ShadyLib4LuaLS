@@ -113,9 +113,9 @@ function battle.ObjectBase.fromPtr(ptr) end
 ---
 ---创建特效
 ---@param id integer 特效ID
----@param x number X坐标 <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
----@param direction? integer 朝向（1=右，-1=左，默认1）
+---@param x number X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
 ---@param layer? integer 渲染层级（默认1）
 ---@return guilib.Effect
 function battle.ObjectBase:createEffect(id, x, y, direction, layer) end
@@ -195,9 +195,9 @@ function battle.Object.fromPtr(ptr) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
----@param direction? integer 朝向（1=右，-1=左，默认1）
+---@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
@@ -206,9 +206,9 @@ function battle.Object:createObject(actionId, x, y, direction, layer, customData
 ---
 ---创建子物体（配合getChildrenB/parentObjectB）
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
----@param direction? integer 朝向（1=右，-1=左，默认1）
+---@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
@@ -450,9 +450,9 @@ function battle.Player:updateAirMovement(a1, a2) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
----@param direction? integer 朝向（1=右，-1=左，默认1）
+---@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为角色当前朝向）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
