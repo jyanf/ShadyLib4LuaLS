@@ -123,23 +123,25 @@ soku.CollisionType = {
     None = 0,               -- 无判定
     Hit = 1,                -- 命中
     Blocked = 2,            -- 打防
-    Type3 = 3,              -- 当身技命中
-    BulletHighDensity = 4,  -- 高密度弹幕相抵
-    Type5 = 5,              -- 弹幕即刻销毁
-    Grazed = 6,             -- 擦弹
-    Armored = 7,            -- 霸体命中
+    Invul = 3,              -- 命中当身技（禁止取消）
+    BulletHighDensity = 4,  -- 碰到更高相杀级弹幕
+    BulletConsumed = 5,     -- 碰到隙间
+        Type5 = 5,              -- 碰到隙间
+    Grazed = 6,             -- 被擦弹
+    Armored = 7,            -- 命中霸体
     BulletSameDensity = 8,  -- 同级弹幕相抵
-    Type9 = 9               -- 身代命中
+    HitEntity = 9,           -- 命中身代
+        Type9 = 9,              -- 命中身代
 }
 
 ----------------------------
 -- 类定义
 ----------------------------
 
----
+
 ---二维向量类
----<br>2.9+添加四则运算支持：
----<br>表达式示例：v1+v2, v1-v2, 5-v1, -v2, v1*2, 2*v2, v1/2, v1==v2
+---<br>v2.9+添加四则运算支持：
+---<br>表达式示例：v1+v2, v1-v2, 5-v1, -v2, v1\*2, 2\*v2, v1/2, v1==v2
 ---<br>添加__tostring支持，可直接print
 ---@class sokulib.Vector2f
 ---@field x number X坐标
@@ -149,16 +151,13 @@ soku.CollisionType = {
 ---@operator mul(number): sokulib.Vector2f
 ---@operator div(number): sokulib.Vector2f
 ---@operator unm: sokulib.Vector2f
-----@operator eq(sokulib.Vector2f): boolean
-----@operator tostring(): string
-soku.Vector2f = {}
 
 ---构造函数
----@param x number
----@param y number
----@return sokulib.Vector2f
----@nodiscard
-function soku.Vector2f(x, y) end
+---@class sokulib.Vector2f
+---@overload fun(x:number,y:number):sokulib.Vector2f
+soku.Vector2f = {}
+
+
 ---从指针建立
 ---@param ptr integer 指针地址
 ---@return sokulib.Vector2f
@@ -166,11 +165,11 @@ function soku.Vector2f(x, y) end
 function soku.Vector2f.fromPtr(ptr) end
 ---
 ---计算向量模长
----@return number 长度
+---@return number @长度
 function soku.Vector2f:length() end
 ---
 ---计算向量角度
----@return number 角度 （-180~180）
+---@return number @角度 （-180~180）
 function soku.Vector2f:angle() end
 ---
 ---旋转向量
@@ -181,24 +180,27 @@ function soku.Vector2f:rotate(angle, center) end
 ---计算二维叉积
 ---@param s sokulib.Vector2f 向量
 ---@param v sokulib.Vector2f 另一个向量
----@return number 叉积结果 （s.x*v.y - s.y*v.x）
+---@return number @叉积结果 （s.x\*v.y - s.y\*v.x）
 function soku.Vector2f.cross(s, v) end
 ---
 ---计算向量点乘
 ---@param s sokulib.Vector2f 向量
 ---@param v sokulib.Vector2f 另一个向量
----@return number 点乘结果 （s.x*v.x + s.y*v.y）
+---@return number @点乘结果 （s.x\*v.x + s.y\*v.y）
 function soku.Vector2f.dot(s, v) end
 
 ---
 ---检查功能键按下当帧
 ---@param keyId integer 键位编号
----@return boolean 是否发生按下
+---@param alt boolean? 同时检查alt键
+---@param shift boolean? 同时检查shift键
+---@param ctrl boolean? 同时检查ctrl键
+---@return boolean @是否发生按下
 ---@nodiscard
-function soku.checkFKey(keyId) end
+function soku.checkFKey(keyId, alt, shift, ctrl) end
 
 ---
----播放音效
+---播放通用音效（区别于角色音效）
 ---@param sfxId integer 音效ID
 function soku.playSE(sfxId) end
 soku.playSFX = soku.playSE -- 别名支持
@@ -211,35 +213,49 @@ soku.playSFX = soku.playSE -- 别名支持
 function soku.playBGM(bgmPath, fadeIn, fadeOut) end
 
 ---
----获取角色名称
+---重新加载指定id的通用音效，使得通用音效替换不用重进游戏<br>
+---1. 使用addAlias替换了对应wav后，立即刷新使替换生效
+---2. 对应wav被removeFile后，用于恢复原版音效（一般写在AtExit里）
+---@param sfxId integer 需要重载的音效ID（范围0~127）
+---@return boolean @加载成功与否
+function soku.reloadSE(sfxId) end
+
+---
+---获取角色名称；建议配合SubscribeReady使用
 ---@param characterId integer|sokulib.Character 角色ID
----@return string? 角色名称
+---@return string? @角色名称
 ---@nodiscard
 function soku.characterName(characterId) end
+
+---获取角色英文名称字典<br>
+---建议配合SubscribeReady使用
+---@return table<integer, string>? @角色编号到英文名的字典
+---@nodiscard
+function soku.getCharacterTable() end
 
 ---
 ---注册玩家信息变化事件
 ---@param callback fun(info: battlelib.PlayerInfo):any 回调函数
----@return integer 注册ID
+---@return integer @注册ID
 function soku.SubscribePlayerInfo(callback) end
 
 ---@alias cb2 fun(scene: guilib.Scene):integer?
 ---
 ---注册回调到场景切换事件
 ---@param callback fun(id: sokulib.Scene, scene: guilib.Scene):cb2|boolean? 回调函数
----@return integer 注册ID
+---@return integer @注册ID
 function soku.SubscribeSceneChange(callback) end
 
 ---
 ---注册回调到游戏准备事件
 ---@param callback fun():any 回调函数
----@return integer 注册ID
+---@return integer @注册ID
 function soku.SubscribeReady(callback) end
 
 ---
 ---注册回调到战斗事件
 ---@param callback fun():any 回调函数
----@return integer 注册ID
+---@return integer @注册ID
 function soku.SubscribeBattle(callback) end
 
 ---

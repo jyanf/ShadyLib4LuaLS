@@ -17,12 +17,12 @@ gui = {}
 ---@field offsetY integer Y轴偏移
 ---@field spacingX integer 字距
 ---@field spacingY integer 行距
-gui.Font = {}
 
 ---构造函数
----@return guilib.Font
----@nodiscard
-function gui.Font() end
+---@class guilib.Font
+---@overload fun():guilib.Font
+gui.Font = {}
+
 
 ---
 ---设置字体名称
@@ -38,7 +38,7 @@ function gui.Font:setColor(color1, color2) end
 ---
 ---加载字体文件
 ---@param fileName string 字体文件路径
----@return integer 加载状态 
+---@return integer @加载状态 
 function gui.Font.loadFontFile(fileName) end
 
 
@@ -91,8 +91,8 @@ gui.Cursor = {}
 
 ---获取槽位位置
 ---@param index integer 索引
----@return integer 位置坐标x _
----@return integer 位置坐标y _
+---@return integer @位置坐标x _
+---@return integer @位置坐标y _
 ---@nodiscard
 function gui.Cursor:getPosition(index) end
 ---
@@ -157,12 +157,12 @@ function gui.DesignObject:getValueControl() end
 ---
 ---界面设计管理器
 ---@class guilib.Design
-gui.Design = {}
----
+
 ---构造函数
----@return guilib.Design
----@nodiscard
-function gui.Design() end
+---@class guilib.Design
+---@overload fun():guilib.Design
+gui.Design = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -343,14 +343,19 @@ function gui.Renderer:destroy(...) end
 ---
 ---显示对话框（测试功能）
 ---@param text string 显示文本
----@return boolean 是否成功 （与其他脚本的对话框冲突则失败） 
+---@return boolean @是否成功 （与其他脚本的对话框冲突则失败） 
 function gui.Renderer:ShowMessage(text) end
 ---
 ---显示带有选择的对话框（测试功能）
 ---@param text string 显示文本
 ---@param defaultYes boolean 是否默认指向“是”
----@return boolean 是否成功 （与其他脚本的对话框冲突则失败）
+---@return boolean @是否成功 （与其他脚本的对话框冲突则失败）
 function gui.Renderer:ShowChoice(text, defaultYes) end
+---
+---移除已创建的对话框（测试功能）
+---@return boolean @是否成功 （与其他脚本的对话框冲突则失败）
+function gui.Renderer:RemoveMessage() end
+
 
 
 ---输入帧计数·对战
@@ -401,7 +406,7 @@ gui.Menu = {}
 
 ---打开一新的空白菜单
 ---@param onProcess fun(menu: guilib.Menu):boolean? 菜单处理回调函数
----@return guilib.Menu 新的菜单对象
+---@return guilib.Menu @新的菜单对象
 ---@nodiscard
 function gui.OpenMenu(onProcess) end
 

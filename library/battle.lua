@@ -17,7 +17,7 @@ battle = {}
 ---@class battlelib.PlayerInfo
 ---@field character sokulib.Character 角色号（只读）
 ---@field teamId integer 阵营ID（1P=0，2P=1）
----@field isRight integer 是否右方（1P=0，2P=1）
+---@field isRight integer （已被teamId替代）是否右方（1P=0，2P=1）
 ---@field paletteId integer 配色号（0~7, 只读）
 ---@field palette integer 配色号（0~7, 只读）
 ---@field deckId integer 卡组ID（只读）
@@ -57,12 +57,12 @@ function battle.GameParams.fromPtr(ptr) end
 ---@field xRotation number X轴旋转角
 ---@field yRotation number Y轴旋转角
 ---@field zRotation number Z轴旋转角
-battle.RenderInfo = {}
----
+
 ---构造函数
----@return battlelib.RenderInfo
----@nodiscard
-function battle.RenderInfo() end
+---@class battlelib.RenderInfo
+---@overload fun():battlelib.RenderInfo
+battle.RenderInfo = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -88,7 +88,7 @@ function battle.RenderInfo.fromPtr(ptr) end
 ---@field sequenceId integer 动作序列ID
 ---@field poseId integer 当前poseID
 ---@field poseFrame integer 当前pose帧数
----@field currentFrame integer 序列停留帧数
+---@field currentFrame integer 当前序列帧数
 ---@field sequenceSize integer 序列pose总数
 ---@field poseDuration integer 当前pose时长
 ---@field hp integer 当前生命值
@@ -139,14 +139,15 @@ function battle.ObjectBase:setSequence(sequenceId) end
 function battle.ObjectBase:setPose(poseId) end
 ---
 ---向后推进动画帧
----@return boolean 是否到达Seq末端或为循环Seq
+---@return boolean @是否到达Seq末端或为循环Seq
 function battle.ObjectBase:advanceFrame() end
 ---
 ---重置物理状态（清空速度/重力）
 function battle.ObjectBase:resetForces() end
 ---
 ---检测触地与否
----@return integer 0=空中，1=地面
+---@return boolean
+---@nodiscard
 function battle.ObjectBase:isOnGround() end
 
 ---
@@ -215,18 +216,18 @@ function battle.Object:createObject(actionId, x, y, direction, layer, customData
 function battle.Object:createChild(actionId, x, y, direction, layer, customData) end
 ---
 ---获取所有子对象的列表
----@return table<integer, battlelib.Object> 子对象表
+---@return table<integer, battlelib.Object>? @子对象表
 function battle.Object:getChildrenB() end
 ---
 ---处理擦弹事件（仍需手动消除弹幕）
 ---@param grazeDensity integer 最大擦弹抗性
----@return boolean 是否超过抗性
+---@return boolean @是否超过抗性
 function battle.Object:checkGrazed(grazeDensity) end
 
 ---
 ---处理弹幕相杀事件（仍需手动消除弹幕）
 ---@param collisionDensity integer 最大相杀回数
----@return boolean 是否超过回数
+---@return boolean @是否超过回数
 function battle.Object:checkProjectileHit(collisionDensity) end
 
 ---
@@ -236,7 +237,7 @@ function battle.Object:checkProjectileHit(collisionDensity) end
 ---@param smallCrystals integer 生成小水晶数量
 ---@param offsetX? number 生成位置X轴偏移（默认0）
 ---@param offsetY? number 生成位置Y轴偏移（默认0）
----@return boolean 是否应消除
+---@return boolean @是否应消除
 function battle.Object:checkTurnIntoCrystal(onlyAirHit, bigCrystals, smallCrystals, offsetX, offsetY) end
 
 ---
@@ -249,17 +250,17 @@ function battle.Object:checkTurnIntoCrystal(onlyAirHit, bigCrystals, smallCrysta
 function battle.Object:setTail(actionId, width, length, unknown, blendMode) end
 
 ---
----读取额外float数据
+---读取额外float数据<br>已过时，现推荐直接使用.customData[n]
 ---@param count integer 要读取的字节数
----@return string 数据字节串（需自行解析）
+---@return string @数据字节串（需自行解析）
+---@deprecated
 function battle.Object:getCustomData(count) end
 
-
----角色控制类
+---对战角色
 ---@class battlelib.Player : battlelib.ObjectBase
 ---@field character sokulib.Character 角色号（只读）
 ---@field teamId integer 阵营ID（1P=0，2P=1）
----@field isRight integer 是否右方（1P=0，2P=1）
+---@field isRight integer （已被teamId替代）是否右方（1P=0，2P=1）
 ---@field paletteId integer 配色号（0~7, 只读）
 ---
 ---@field spellStopCounter integer 设置符卡发动时停
@@ -282,6 +283,11 @@ function battle.Object:getCustomData(count) end
 ---@field healCharmTimer integer 护符回血剩余帧数
 ---@field handCount integer 当前手卡数量（只读）
 ---
+---@field skillLevelA integer[] 当前生效的必杀等级表（int8数组）索引1~32
+---@field effectiveSkillLevel integer[] 当前生效的必杀等级表（int8数组）索引1~32
+---@field skillLevelB integer[] 已升级的必杀等级表（int8数组）索引1~32
+---@field skilledSkillLevel integer[] 已升级的必杀等级表（int8数组）索引1~32
+---
 ---@field input guilib.KeyInputLight 对战输入计数
 ---@field inputBuffered guilib.KeyInputLight 对战输入计数（缓冲）
 ---@field gpShort integer[] 整型通用计数器（short数组）索引1~6
@@ -299,11 +305,11 @@ function battle.Player.fromPtr(ptr) end
 ----------------------------
 ---
 ---处理地面更新
----@return boolean 是否因地形变化离地
+---@return boolean @是否因地形变化离地
 function battle.Player:applyGroundMechanics() end
 ---
 ---处理空中更新
----@return boolean 是否触发着陆
+---@return boolean @是否触发着陆
 function battle.Player:applyAirMechanics() end
 ---
 ---更新地面行走
@@ -312,7 +318,7 @@ function battle.Player:applyAirMechanics() end
 function battle.Player:updateGroundMovement(speed) end
 ---
 ---检测地面接触状态
----@return boolean 是否落地
+---@return boolean @是否落地
 ---@nodiscard
 function battle.Player:isGrounded() end
 
@@ -328,32 +334,32 @@ function battle.Player:checkTurnAround() end
 ---
 ---获取招式取消级
 ---@param actionId integer 招式所在的动作ID
----@return integer 取消级
+---@return integer @取消级
 ---@nodiscard
 function battle.Player:getMoveLock(actionId) end
 ---
 ---处理长按大跳
----@return boolean 是否成功大跳
+---@return boolean @是否成功大跳
 function battle.Player:handleHJ() end
 ---
 ---处理输入大跳
 ---@param actionLock integer 当前动作被取消级
 ---@param moveCancelable integer 可移动取消
----@return boolean 是否成功大跳
+---@return boolean @是否成功大跳
 function battle.Player:handleHJInput(actionLock, moveCancelable) end
 ---
 ---处理地面冲刺（前/后）
 ---@param actionLock integer 当前动作被取消级
 ---@param moveCancelable integer 可移动取消
----@return boolean 是否成功冲刺
+---@return boolean @是否成功冲刺
 function battle.Player:handleGroundDash(actionLock, moveCancelable) end
 ---
 ---处理地面DD
----@return boolean 是否成功发动
+---@return boolean @是否成功发动
 function battle.Player:handleGroundBE() end
 ---
 ---处理空中DD
----@return boolean 是否成功发动
+---@return boolean @是否成功发动
 function battle.Player:handleAirBE() end
 ---
 ---处理前冲空中冲刺
@@ -361,7 +367,7 @@ function battle.Player:handleAirBE() end
 ---@param moveCancelable integer 可移动取消
 ---@param allowedAirMoves integer 允许空中机动次数
 ---@param airDashCancelSeq integer 空中冲刺取消序列
----@return boolean 是否发生成功
+---@return boolean @是否发生成功
 function battle.Player:handleFwdAirDash(actionLock, moveCancelable, allowedAirMoves, airDashCancelSeq) end
 ---
 ---处理后撤空中冲刺
@@ -369,18 +375,18 @@ function battle.Player:handleFwdAirDash(actionLock, moveCancelable, allowedAirMo
 ---@param moveCancelable integer 可移动取消
 ---@param allowedAirMoves integer 允许空中机动次数
 ---@param airDashCancelSeq integer 空中冲刺取消序列
----@return boolean 是否发生冲刺
+---@return boolean @是否发生冲刺
 function battle.Player:handleBackAirDash(actionLock, moveCancelable, allowedAirMoves, airDashCancelSeq) end
 ---
 ---处理普通飞行
 ---@param actionLock integer 当前动作取消级
 ---@param moveCancelable integer 可移动取消
 ---@param allowedAirMoves integer 允许空中机动次数
----@return boolean 是否进入飞行
+---@return boolean @是否进入飞行
 function battle.Player:handleNormalFlight(actionLock, moveCancelable, allowedAirMoves) end
 ---
 ---处理切卡操作
----@return boolean 是否发生切换
+---@return boolean @是否发生切换
 ---@nodiscard
 function battle.Player:handleCardSwitch() end
 ---
@@ -393,24 +399,24 @@ function battle.Player:unknown46d950() end
 ---
 ---获取手卡ID
 ---@param index integer 手卡索引
----@return integer 卡牌ID
+---@return integer @卡牌ID
 ---@nodiscard
 function battle.Player:handGetId(index) end
 ---
 ---获取手卡消耗
 ---@param index integer 手卡索引
----@return integer 耗卡量
+---@return integer @耗卡量
 ---@nodiscard
 function battle.Player:handGetCost(index) end
 ---
 ---使用系统卡
 ---@param actionLock integer 动作锁定时间
----@return boolean 是否已使用
+---@return boolean @是否已使用
 function battle.Player:useSystemCard(actionLock) end
 --
 ---检测符卡是否足够消耗
 ---@param index integer 手卡索引
----@return boolean 是否足够
+---@return boolean @是否足够
 ---@nodiscard
 function battle.Player:canActivateCard(index) end
 ---
@@ -423,7 +429,7 @@ function battle.Player:useSpellCard(actionId, actionLock) end
 function battle.Player:eventSpellUse() end
 ---
 ---检测灵力是否足够（>1）
----@return boolean 是否足够
+---@return boolean @是否足够
 ---@nodiscard
 function battle.Player:canSpendSpirit() end
 ---
@@ -439,13 +445,13 @@ function battle.Player:eventSkillUse() end
     ---弹幕创建相关
 ----------------------------
 ---
----计算射击角度，存入field0x7f0
+---计算射击角度，存入gpFloat[6]
 ---@param highLimit number 角度上界
 ---@param lowLimit number 角度下界
----@return number 发射角度（极坐标系）
+---@return number @发射角度（极坐标系）
 function battle.Player:decideShotAngle(highLimit, lowLimit) end
 ---
----@deprecated 使用decideShotAngle替代
+---@deprecated 该函数命名有误；请使用decideShotAngle
 function battle.Player:updateAirMovement(a1, a2) end
 ---
 ---创建对战物体
@@ -462,7 +468,7 @@ function battle.Player:createObject(actionId, x, y, direction, layer, customData
 ---@param value integer 增加量（500=一张）
 function battle.Player:addCardMeter(value) end
 ---
----播放音效
+---播放角色音效（区别于通用音效soku.playSE）
 ---@param sfxId integer 角色音效ID
 function battle.Player:playSFX(sfxId) end
 ---

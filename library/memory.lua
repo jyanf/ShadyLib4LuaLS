@@ -40,7 +40,7 @@ function memory.readdouble(address) end
 ---读取原始字节数据
 ---@param address integer 起始地址
 ---@param size integer 读取长度
----@return string 读取所得字节串
+---@return string @读取所得字节串
 ---@nodiscard
 function memory.readbytes(address, size) end
 
@@ -81,6 +81,7 @@ function memory.writebytes(address, bytes) end
 ---
 ---函数调用包装器
 ---@class memorylib.FuncCall
+---@operator call(unknown):any
 ---@overload fun(thisptr?: integer, sargs...: integer): integer?
 memory.FuncCall = {}
 
@@ -88,10 +89,10 @@ memory.FuncCall = {}
 
 
 ---
----创建函数调用器
+---创建函数调用器（暂不支持两个参数及以上的fastcall）
 ---@param addr integer 函数地址
----@param argc integer 参数个数
----@param isThisCall boolean 是否thiscall调用约定
+---@param argc integer 参数个数（不计this指针）
+---@param isThisCall boolean 是否为thiscall调用约定
 ---@return memorylib.FuncCall
 ---@nodiscard
 function memory.createfunccall(addr, argc, isThisCall) end
@@ -99,7 +100,7 @@ function memory.createfunccall(addr, argc, isThisCall) end
 ---
 ---创建虚函数调用器
 ---@param index integer 虚函数表索引
----@param argc integer 参数个数
+---@param argc integer 参数个数（不计this指针）
 ---@return memorylib.FuncCall
 ---@nodiscard
 function memory.createvirtualcall(index, argc) end
@@ -126,10 +127,21 @@ memory.CPUState = {}
 ---回调处理器
 ---@class memorylib.Callback
 ---@field enabled boolean 回调是否启用
----@overload fun(state: memorylib.CPUState, sargs...: integer): integer|boolean?
+---@operator call(...): integer
 memory.Callback = {}
 
----回调调用接口
+---
+---注册跨包回调
+---@param name string 凭据名称
+---@param callback memorylib.Callback 回调处理器
+function memory.setIPC(name, callback) end
+
+---
+---获取跨包回调
+---@param name string 凭据名称
+---@return memorylib.Callback?
+---@nodiscard
+function memory.getIPC(name) end
 
 ---
 ---创建回调处理器
@@ -143,14 +155,15 @@ function memory.createcallback(sargc, callback) end
 ---函数调用钩子
 ---@param addr integer call指令地址
 ---@param callback memorylib.Callback 回调处理器
----@return boolean 该地址是否为初次hook
-function memory.hookcall(addr, callback) end
+---@param argv integer? 原函数栈上参数的个数（跳过非__cdecl类原函数时需要指定该数据以平衡堆栈）
+---@return boolean @该地址是否为初次hook
+function memory.hookcall(addr, callback, argv) end
 
 ---
 ---虚函数表钩子
 ---@param addr integer 虚表地址
 ---@param callback memorylib.Callback 回调处理器
----@return boolean 该地址是否为初次hook
+---@return boolean @该地址是否为初次hook
 function memory.hookvtable(addr, callback) end
 
 ---
@@ -158,28 +171,16 @@ function memory.hookvtable(addr, callback) end
 ---@param addr integer 目标地址
 ---@param asmSize integer 覆盖指令长度（最小为5）
 ---@param callback memorylib.Callback 回调处理器
----@return boolean 该地址是否为初次hook
+---@return boolean @该地址是否为初次hook
 function memory.hooktramp(addr, asmSize, callback) end
 
----
----设置跨包回调
----@param name string 凭据名称
----@param callback memorylib.Callback 回调处理器
-function memory.setIPC(name, callback) end
-
----
----获取跨包回调
----@param name string 凭据名称
----@return memorylib.Callback?
----@nodiscard
-function memory.getIPC(name) end
 
 ----------------------------
 -- 内存分配器
 ----------------------------
 ---
 ---@param size integer 分配内存字节数
----@return integer 分配的内存地址
+---@return integer @分配的内存地址
 ---@nodiscard
 function memory.new(size) end
 ---

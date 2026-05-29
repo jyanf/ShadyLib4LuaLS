@@ -13,15 +13,15 @@ resource = {}
 ---@enum resource.Type
 resource.Type = {
     Unknown = 0,    -- 未知类型
-    Text = 1,       -- 文本资源
-    Table = 2,      -- 表格数据
-    Label = 3,      -- 标签标记
-    Image = 4,      -- 图像资源
-    Palette = 5,    -- 调色板
-    Sfx = 6,        -- 音效资源
-    Bgm = 7,        -- 背景音乐
-    Schema = 8,     -- 结构模板
-    Texture = 9     -- 纹理数据
+    Text = 1,       -- 文本资源(txt/cv0)
+    Table = 2,      -- 表格数据(csv/cv1)
+    Label = 3,      -- bgm循环标记(lbl/sfl)
+    Image = 4,      -- 图像资源(png/cv2)
+    Palette = 5,    -- 调色板(act/pal)
+    Sfx = 6,        -- 音效资源(wav/cv3)
+    Bgm = 7,        -- 背景音乐(ogg)
+    Schema = 8,     -- 结构模板(xml/pat/dat)
+    Texture = 9     -- 纹理数据(dds)
 }
 
 ----------------------------
@@ -31,12 +31,12 @@ resource.Type = {
 ---文本资源类
 ---@class resourcelib.Text
 ---@field data string 文本内容
-resource.Text = {}
----
+
 ---构造函数
----@return resourcelib.Text
----@nodiscard
-function resource.Text() end
+---@class resourcelib.Text
+---@overload fun():resourcelib.Text
+resource.Text = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -49,12 +49,12 @@ function resource.Text.fromPtr(ptr) end
 ---@class resourcelib.Label
 ---@field begin integer 起始时间点（秒）
 ---@field finish integer 结束时间点（秒）
-resource.Label = {}
----
+
 ---构造函数
----@return resourcelib.Label
----@nodiscard
-function resource.Label() end
+---@class resourcelib.Label
+---@overload fun():resourcelib.Label
+resource.Label = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -66,12 +66,12 @@ function resource.Label.fromPtr(ptr) end
 ---调色板资源类
 ---@class resourcelib.Palette
 ---@field data string 原始调色板数据
-resource.Palette = {}
----
+
 ---构造函数
----@return resourcelib.Palette
----@nodiscard
-function resource.Palette() end
+---@class resourcelib.Palette
+---@overload fun():resourcelib.Palette
+resource.Palette = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -81,10 +81,10 @@ function resource.Palette.fromPtr(ptr) end
 ---
 ---获取颜色值(16bit格式)
 ---@param index integer 颜色索引 (0-255)
----@return boolean 透明通道
----@return integer 红色通道(0~31)
----@return integer 绿色通道(0~31)
----@return integer 蓝色通道(0~31)
+---@return boolean alpha 透明通道
+---@return integer red 红色通道(0~31)
+---@return integer green 绿色通道(0~31)
+---@return integer blue 蓝色通道(0~31)
 ---@nodiscard
 function resource.Palette:getColor(index) end
 ---
@@ -105,12 +105,13 @@ function resource.Palette:setColor(index, alpha, r, g, b) end
 ---@field bitsPerPixel integer 位深度（只读）
 ---@field size integer 数据总大小（只读）
 ---@field raw string 像素数据
+
+---构造函数
+---@class resourcelib.Image
+---@overload fun():resourcelib.Image 
 resource.Image = {}
 ---
----构造函数
----@return resourcelib.Image
----@nodiscard
-function resource.Image() end
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
@@ -133,18 +134,35 @@ function resource.Image:create(bpp, width, height) end
 ---@field blockAlign integer 块对齐
 ---@field bitsPerSample integer 位深度
 ---@field data string 原始音频数据
-resource.Sfx = {}
----
+
 ---构造函数
----@return resourcelib.Sfx
----@nodiscard
-function resource.Sfx() end
+---@class resourcelib.Sfx
+---@overload fun():resourcelib.Sfx
+resource.Sfx = {}
+
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
 ---@return resourcelib.Sfx
 ---@nodiscard
 function resource.Sfx.fromPtr(ptr) end
+
+---
+---解析并创建音频实例
+---@return resourcelib.SoundInstance
+---@nodiscard
+function resource.Sfx:parse() end
+
+---音频实例类
+---@class resourcelib.SoundInstance
+
+---构造函数（通过wav文件名创建）
+---@class resourcelib.SoundInstance
+---@overload fun(filename:string):resourcelib.SoundInstance
+resource.SoundInstance = {}
+
+---播放一次音频
+function resource.SoundInstance:play() end
 
 ----------------------------
 -- 全局函数
@@ -159,7 +177,7 @@ function resource.Sfx.fromPtr(ptr) end
 ---
 ---从文件创建资源对象
 ---@param sourceName string 源文件路径
----@return resourcelib.supported 资源对象
+---@return resourcelib.supported @资源对象
 ---@nodiscard
 function resource.createfromfile(sourceName) end
 
