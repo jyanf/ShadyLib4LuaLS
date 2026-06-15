@@ -79,23 +79,28 @@ function memory.writebytes(address, bytes) end
 ----------------------------
 
 ---
----函数调用包装器
+---函数调用器（通过函数地址调用C函数）
 ---@class memorylib.FuncCall
 ---@operator call(unknown):any
 ---@overload fun(thisptr?: integer, sargs...: integer): integer?
-memory.FuncCall = {}
+---@enum memorylib.CallConvs
+memory.FuncCall = {
+    CDECL=0, STDCALL=0,
+    THISCALL=1,
+    FASTCALL=2,
+}
 
----调用目标函数
+-- 调用目标函数
 
 
 ---
----创建函数调用器（暂不支持两个参数及以上的fastcall）
+---创建函数调用器
 ---@param addr integer 函数地址
 ---@param argc integer 参数个数（不计this指针）
----@param isThisCall boolean 是否为thiscall调用约定
+---@param callConvs memorylib.CallConvs|boolean 调用约定类型（cdecl/stdcall=0，thiscall=1，fastcall=2）
 ---@return memorylib.FuncCall
 ---@nodiscard
-function memory.createfunccall(addr, argc, isThisCall) end
+function memory.createfunccall(addr, argc, callConvs) end
 
 ---
 ---创建虚函数调用器
@@ -123,30 +128,61 @@ function memory.createvirtualcall(index, argc) end
 memory.CPUState = {}
 
 ---@alias ccb fun(state: memorylib.CPUState, ...: integer): integer|boolean?
+---@alias ccb2 fun(state: nil, ...: any): any
 ---
----回调处理器
+---回调包装器
 ---@class memorylib.Callback
 ---@field enabled boolean 回调是否启用
----@operator call(...): integer
+---@operator call(...): any
 memory.Callback = {}
 
 ---
----注册跨包回调
+---注册跨包回调（Inter Package Callback）
+---========
+---注册后，其他包的lua脚本可通过同名凭据使用 `memory.getIPC` 获取该回调并自行调用，获得其返回值。
+---@see memory.getIPC
+---
+---注意：
+---* IPC 调用支持lua基础类型以及大部分userdata类型。
+---* IPC 场景的Callback不支持直接传递或返回 Lua function。
+---* 如需传递回调函数，请使用 `memory.createCallback` 包装为`Callback`对象后方可传递。
+---
+---示例：
+---```lua
+----- package as API
+---memory.setIPC("math_add", 
+---    memory.createCallback(2, function(state, a, b)
+---    -- call from lua, para state is nil
+---        return a + b
+---    end)
+---)
+---```
 ---@param name string 凭据名称
----@param callback memorylib.Callback 回调处理器
+---@param callback memorylib.Callback 待注册的IPC
 function memory.setIPC(name, callback) end
 
 ---
----获取跨包回调
+---获取跨包回调（Inter Package Callback）
+---========
+---获取由其他包注册过的回调包装器。
+---@see memory.setIPC
+---
+---示例：
+---```lua
+---local add = memory.getIPC("math_add")
+---if add then
+---    print(add(3, 5)) -- 8
+---end
+---```
 ---@param name string 凭据名称
----@return memorylib.Callback?
+---@return memorylib.Callback? @依名称获取到的IPC，返回nil则代表不存在
 ---@nodiscard
 function memory.getIPC(name) end
 
 ---
----创建回调处理器
----@param sargc integer 栈中参数个数
----@param callback ccb 回调函数，“...”参数量需与sargc一致
+---创建回调包装器
+---@param sargc integer 对钩子回调（Hook）：需要获取的栈中参数个数；对跨包回调（IPC）：预期参数个数
+---@param callback ccb|ccb2 回调函数，“...”可变参数个数需与sargc一致
 ---@return memorylib.Callback
 ---@nodiscard
 function memory.createcallback(sargc, callback) end
@@ -154,7 +190,7 @@ function memory.createcallback(sargc, callback) end
 ---
 ---函数调用钩子
 ---@param addr integer call指令地址
----@param callback memorylib.Callback 回调处理器
+---@param callback memorylib.Callback 回调包装器
 ---@param argv integer? 原函数栈上参数的个数（跳过非__cdecl类原函数时需要指定该数据以平衡堆栈）
 ---@return boolean @该地址是否为初次hook
 function memory.hookcall(addr, callback, argv) end
@@ -162,15 +198,15 @@ function memory.hookcall(addr, callback, argv) end
 ---
 ---虚函数表钩子
 ---@param addr integer 虚表地址
----@param callback memorylib.Callback 回调处理器
+---@param callback memorylib.Callback 回调包装器
 ---@return boolean @该地址是否为初次hook
 function memory.hookvtable(addr, callback) end
 
 ---
 ---指令级钩子
 ---@param addr integer 目标地址
----@param asmSize integer 覆盖指令长度（最小为5）
----@param callback memorylib.Callback 回调处理器
+---@param asmSize integer 覆盖指令长度（至少为5）
+---@param callback memorylib.Callback 回调包装器
 ---@return boolean @该地址是否为初次hook
 function memory.hooktramp(addr, asmSize, callback) end
 

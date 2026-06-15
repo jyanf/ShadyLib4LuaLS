@@ -272,7 +272,8 @@ function gui.EffectManager:clearEffects() end
 ---@field effects guilib.EffectManager 特效管理系统
 ---@field isActive boolean 渲染器启用状态
 ---
----@field showResult integer 对话框的**当帧**响应结果 <br>枚举值：<br>MSG_CLOSED=-1 <br>MSG_WAIT=0 <br>MSG_OK=1 <br>MSG_CANCEL=2 <br>MSG_YES=3 <br>MSG_NO=4
+---@field showResult guilib.ShowResults 对话框的**当帧**响应结果 <br>枚举值：<br>MSG_CLOSED=-1 <br>MSG_WAIT=0 <br>MSG_OK=1 <br>MSG_CANCEL=2 <br>MSG_YES=3 <br>MSG_NO=4
+---@enum guilib.ShowResults
 gui.Renderer = {
     MSG_CLOSED = -1, --未打开对话框
     MSG_WAIT = 0, --等待对话框确认

@@ -117,6 +117,35 @@ soku.Stage = {
 }
 
 ---
+---对战天气枚举
+---@enum sokulib.Weather
+soku.Weather = {
+    None = 21,          -- 无天气
+    Sunny = 0,          -- 快晴
+    Drizzle = 1,        -- 雾雨
+    Cloudy = 2,         -- 云天
+    BlueSky = 3,        -- 苍天
+    Hail = 4,           -- 雹
+    SpringHaze = 5,     -- 花昙（花云）
+    HeavyFog = 6,       -- 浓雾
+    Snow = 7,           -- 雪
+    SunShower = 8,      -- 天气雨
+    Sprinkle = 9,       -- 疏雨
+    Tempest = 10,       -- 风雨
+    MountainVapor = 11, -- 晴岚
+    RiverMist = 12,     -- 川雾
+    Typhoon = 13,       -- 台风
+    Calm = 14,          -- 凪（无风）
+    DiamondDust = 15,   -- 钻石尘
+    DustStorm = 16,     -- 黄砂
+    ScorchingSun = 17,  -- 烈日
+    Monsoon = 18,       -- 梅雨
+    Aurora = 19,        -- 极光
+    Twilight = 20,      -- 绯想天
+    Clear = 21,         -- 无天气
+}
+
+---
 ---碰撞判定类型枚举
 ---@enum sokulib.CollisionType
 soku.CollisionType = {
@@ -206,11 +235,11 @@ function soku.playSE(sfxId) end
 soku.playSFX = soku.playSE -- 别名支持
 
 ---
----播放BGM/停止当前BGM
+---切换播放BGM/停止当前BGM
 ---@param bgmPath? string|nil BGM文件路径（留空以停止播放）
----@param fadeOut? integer 渐出时间（帧数，默认1000）
----@param fadeIn? integer 渐入时间（帧数，默认500）
-function soku.playBGM(bgmPath, fadeIn, fadeOut) end
+---@param fadeOut? integer 渐出时间（毫秒数，默认1000）
+---@param delayIn? integer 切曲延迟（毫秒数，默认500）
+function soku.playBGM(bgmPath, fadeOut, delayIn) end
 
 ---
 ---重新加载指定id的通用音效，使得通用音效替换不用重进游戏<br>

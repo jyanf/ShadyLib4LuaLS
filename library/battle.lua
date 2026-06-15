@@ -5,8 +5,8 @@
 ---@class battlelib
 ---@field manager battlelib.Manager 对局管理器实例
 ---@field gameParams battlelib.GameParams 对局参数实例
----@field activeWeather integer 当前生效的天气ID
----@field displayedWeather integer 当前预报的天气ID
+---@field activeWeather sokulib.Weather 当前生效的天气ID
+---@field displayedWeather sokulib.Weather 当前预报的天气ID
 battle = {}
 
 ----------------------------
@@ -21,7 +21,7 @@ battle = {}
 ---@field paletteId integer 配色号（0~7, 只读）
 ---@field palette integer 配色号（0~7, 只读）
 ---@field deckId integer 卡组ID（只读）
----@field inputType integer 角色控制类型
+---@field inputType integer 角色操纵类型（0=玩家，1=电脑，2=故事boss，3=练习人偶）
 battle.PlayerInfo = {}
 ---
 ---从指针建立
@@ -33,7 +33,7 @@ function battle.PlayerInfo.fromPtr(ptr) end
 
 ---对局参数
 ---@class battlelib.GameParams
----@field difficulty integer 难度等级
+---@field difficulty integer 难度等级（0=EASY，1=NORMAL，2=HARD，3=LUNATIC）
 ---@field stageId sokulib.Stage 当前舞台ID
 ---@field musicId integer BGM编号
 ---@field player1 battlelib.PlayerInfo 玩家1信息
@@ -47,12 +47,31 @@ battle.GameParams = {}
 ---@nodiscard
 function battle.GameParams.fromPtr(ptr) end
 
+---uint32颜色代理
+---@class battlelib.ColorEx
+---@field a integer alpha 不透明度通道（0~255）
+---@field r integer red 红色通道（0~255）
+---@field g integer green 绿色通道（0~255）
+---@field b integer blue 蓝色通道（0~255）
+---@field value integer 颜色ARGB值（小端序）
+---@operator add(battlelib.ColorEx):battlelib.ColorEx 加和并平均颜色
+---@operator mul(number):battlelib.ColorEx 乘算不透明度
+----@operator tostring():string
+---@overload fun(a_or_v:integer?, r:integer?, g:integer?, b:integer?):battlelib.ColorEx 通过单整数值或a/r/g/b通道构造；默认为0xFFFFFFFF
+battle.ColorEx = {}
+
+---从指针建立
+---@param ptr integer 指针地址
+---@return battlelib.ColorEx
+function battle.ColorEx.fromPtr(ptr) end
 
 ---物体渲染参数
 ---@class battlelib.RenderInfo
----@field color integer ARGB格式颜色值
----@field shaderType integer 着色器类型（0=正常，1=去色）
----@field shaderColor integer 着色器叠加颜色
+---@field color integer ARGB颜色值（建议使用colorEx）
+---@field colorEx battlelib.ColorEx 颜色
+---@field shaderType battlelib.ShaderTypes 着色器类型（0=正常，1=去色，2=覆层，3=发光）
+---@field shaderColor integer 着色器颜色（建议使用shaderColorEx）
+---@field shaderColorEx battlelib.ColorEx 着色器颜色
 ---@field scale sokulib.Vector2f 缩放比例
 ---@field xRotation number X轴旋转角
 ---@field yRotation number Y轴旋转角
@@ -61,7 +80,13 @@ function battle.GameParams.fromPtr(ptr) end
 ---构造函数
 ---@class battlelib.RenderInfo
 ---@overload fun():battlelib.RenderInfo
-battle.RenderInfo = {}
+---@enum battlelib.ShaderTypes
+battle.RenderInfo = {
+    NONE=0,
+    GRAYSCALE=1,
+    OVERLAY=2,
+    GLOW=3,
+}
 
 ---
 ---从指针建立
