@@ -130,11 +130,17 @@ function gui.Cursor:pgDn() end
 
 
 
----设计对象
+---设计元素对象
 ---@class guilib.DesignObject
----@field x integer X坐标
----@field y integer Y坐标
+---@field x number X坐标（已弃用，请使用position）
+---@field y number Y坐标（已弃用，请使用position）
+---@field position sokulib.Vector2f 位置
+---@field offset sokulib.Vector2f 偏移（默认为(0,0)）
 ---@field isActive boolean 激活状态
+---@field anchor sokulib.Vector2f|nil 锚点（仅限\<static\>元素）<br>记得判空
+---@field size sokulib.Vector2f|nil 尺寸（仅限\<static\>元素）<br>记得判空
+---@field scale sokulib.Vector2f|nil 缩放（仅限\<static\>元素）<br>记得判空
+---@field rotation number|nil 旋转（仅限\<static\>元素）<br>记得判空
 gui.DesignObject = {}
 ---
 ---从指针建立
@@ -181,6 +187,8 @@ function gui.Design:clear() end
 
 ---
 ---通过ID获取元素
+---
+---（对ID为0的元素无效）
 ---@param id integer 元素ID
 ---@return guilib.DesignObject
 ---@nodiscard
@@ -188,7 +196,7 @@ function gui.Design:getItemById(id) end
 
 ---
 ---通过序号获取元素
----@param index integer 元素序号
+---@param index integer 元素序号（从1数起）
 ---@return guilib.DesignObject
 ---@nodiscard
 function gui.Design:getItem(index) end
@@ -271,8 +279,8 @@ function gui.EffectManager:clearEffects() end
 ---@field design guilib.Design 界面设计系统
 ---@field effects guilib.EffectManager 特效管理系统
 ---@field isActive boolean 渲染器启用状态
----
 ---@field showResult guilib.ShowResults 对话框的**当帧**响应结果 <br>枚举值：<br>MSG_CLOSED=-1 <br>MSG_WAIT=0 <br>MSG_OK=1 <br>MSG_CANCEL=2 <br>MSG_YES=3 <br>MSG_NO=4
+----
 ---@enum guilib.ShowResults
 gui.Renderer = {
     MSG_CLOSED = -1, --未打开对话框
@@ -282,6 +290,7 @@ gui.Renderer = {
     MSG_YES = 3, --已选择“是”
     MSG_NO = 4, --已选择“否”
 }
+
 ---
 ---创建精灵对象
 ---@param texturePath string 纹理路径
