@@ -221,12 +221,12 @@ function soku.Vector2f.dot(s, v) end
 ---
 ---检查功能键按下当帧
 ---@param keyId integer 键位编号
----@param alt boolean? 同时检查alt键
 ---@param shift boolean? 同时检查shift键
+---@param alt boolean? 同时检查alt键
 ---@param ctrl boolean? 同时检查ctrl键
 ---@return boolean @是否发生按下
 ---@nodiscard
-function soku.checkFKey(keyId, alt, shift, ctrl) end
+function soku.checkFKey(keyId, shift, alt, ctrl) end
 
 ---
 ---播放通用音效（区别于角色音效）
