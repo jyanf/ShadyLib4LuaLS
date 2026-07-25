@@ -263,7 +263,7 @@ function battle.Object:checkProjectileHit(collisionDensity) end
 ---@param offsetX? number 生成位置X轴偏移（默认0）
 ---@param offsetY? number 生成位置Y轴偏移（默认0）
 ---@return boolean @是否应消除
-function battle.Object:checkTurnIntoCrystal(onlyAirHit, bigCrystals, smallCrystals, offsetX, offsetY) end
+function battle.Object:checkTurnIntoCrystals(onlyAirHit, bigCrystals, smallCrystals, offsetX, offsetY) end
 
 ---
 ---设置拖尾效果
