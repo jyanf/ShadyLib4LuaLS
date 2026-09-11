@@ -211,8 +211,7 @@ function gui.Design:getItemCount() end
 
 ---特效对象
 ---@class guilib.Effect
----@field isEnabled boolean 是否启用
----@field isAlive integer 激活状态
+---@field isAlive integer 是否存活
 ---@field position sokulib.Vector2f 当前位置
 ---@field speed sokulib.Vector2f 移动速度
 ---@field gravity sokulib.Vector2f 重力加速度
@@ -259,17 +258,17 @@ function gui.Effect:nextPose() end
 gui.EffectManager = {}
 
 ---
----加载特效资源pat
+---加载特效pat资源
 ---@param patternPath string 特效pat文件路径
----@param reserve? integer ？预分配实例数量（默认0）？
+---@param reserve? integer effect容器预分配大小（默认0）
 function gui.EffectManager:loadResource(patternPath, reserve) end
 
 ---
----清空所有资源（释放pat和实例）
+---清空所有资源（清除加载的pat数据和特效实例）
 function gui.EffectManager:clear() end
 
 ---
----？仅清除当前特效实例（保留pat）？
+---仅清除当前所有特效实例（保留加载的pat数据）
 function gui.EffectManager:clearEffects() end
 
 
@@ -322,7 +321,6 @@ function gui.Renderer:createText(text, font, w, h, layer) end
 ---@param direction? integer 朝向方向±1
 ---@param layer? integer 图层层级（默认0）
 ---@return guilib.Effect
----@nodiscard
 function gui.Renderer:createEffect(id, x, y, direction, layer) end
 ---
 ---创建水平方向光标

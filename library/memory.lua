@@ -104,7 +104,7 @@ function memory.createfunccall(addr, argc, callConvs) end
 
 ---
 ---创建虚函数调用器
----@param index integer 虚函数表索引
+---@param index integer 虚函数表索引（从0数起）
 ---@param argc integer 参数个数（不计this指针）
 ---@return memorylib.FuncCall
 ---@nodiscard

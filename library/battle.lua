@@ -138,8 +138,8 @@ function battle.ObjectBase.fromPtr(ptr) end
 ---
 ---创建特效
 ---@param id integer 特效ID
----@param x number X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param x number|sokulib.Vector2f? X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number? Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
 ---@param layer? integer 渲染层级（默认1）
 ---@return guilib.Effect
@@ -151,7 +151,7 @@ function battle.ObjectBase:createEffect(id, x, y, direction, layer) end
 ---@param sequenceId integer 序列ID
 function battle.ObjectBase:setActionSequence(actionId, sequenceId) end
 ---
----设置动作（可能中断动画）
+---设置动作
 ---@param actionId integer 目标动作ID
 function battle.ObjectBase:setAction(actionId) end
 ---
@@ -167,7 +167,7 @@ function battle.ObjectBase:setPose(poseId) end
 ---@return boolean @是否到达Seq末端或为循环Seq
 function battle.ObjectBase:advanceFrame() end
 ---
----重置物理状态（清空速度/重力）
+---重置物理状态（清零速度/重力）
 function battle.ObjectBase:resetForces() end
 ---
 ---检测触地与否
@@ -188,7 +188,7 @@ function battle.ObjectBase:isOnGround() end
 function battle.ObjectBase:getHitBoxData() end
 
 ---
----设置动态攻击框
+---设置动态攻击框；所有参数留空则是删除
 ---@param left? integer 左边界（默认0）
 ---@param top? integer 上边界（默认0）
 ---@param right? integer 右边界（默认0）
@@ -221,10 +221,10 @@ function battle.Object.fromPtr(ptr) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param x number|sokulib.Vector2f? X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number? Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
----@param layer? integer 图层层级（1=前景，-1=背景，默认1）
+---@param layer? integer 图层层级（3/2/1=前景，-1/-2=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
 function battle.Object:createObject(actionId, x, y, direction, layer, customData) end
@@ -232,8 +232,8 @@ function battle.Object:createObject(actionId, x, y, direction, layer, customData
 ---
 ---创建子物体（配合getChildrenB/parentObjectB）
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param x number|sokulib.Vector2f? X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number? Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
@@ -481,8 +481,8 @@ function battle.Player:updateAirMovement(a1, a2) end
 ---
 ---创建对战物体
 ---@param actionId integer 物体动作ID
----@param x number|sokulib.Vector2f X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
----@param y number Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param x number|sokulib.Vector2f? X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
+---@param y number? Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认为角色当前朝向）
 ---@param layer? integer 图层层级（1=前景，-1=背景，默认1）
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
@@ -508,8 +508,8 @@ function battle.Player:playSpellBackground(id, duration) end
 function battle.Player:consumeSpirit(cost, delay) end
 ---
 --消费手卡
----@param index integer 手卡索引
----@param costOverride? integer 重设消耗值（0=使用默认）
+---@param index integer? 手卡索引(默认0，即第一张)
+---@param costOverride? integer 重设消耗张数（默认0，即不重设）
 ---@param cardNameTimer? integer 卡名显示时间（默认60帧）
 function battle.Player:consumeCard(index, costOverride, cardNameTimer) end
 ---
