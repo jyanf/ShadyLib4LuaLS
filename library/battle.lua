@@ -82,10 +82,10 @@ function battle.ColorEx.fromPtr(ptr) end
 ---@overload fun():battlelib.RenderInfo
 ---@enum battlelib.ShaderTypes
 battle.RenderInfo = {
-    NONE=0,
-    GRAYSCALE=1,
-    OVERLAY=2,
-    GLOW=3,
+    NONE=0,     --无
+    GRAYSCALE=1,--去色
+    OVERLAY=2,  --覆层
+    GLOW=3,     --加法（发光）
 }
 
 ---
@@ -112,8 +112,8 @@ function battle.RenderInfo.fromPtr(ptr) end
 ---@field actionId integer 当前动作ID
 ---@field sequenceId integer 动作序列ID
 ---@field poseId integer 当前poseID
----@field poseFrame integer 当前pose帧数
----@field currentFrame integer 当前序列帧数
+---@field poseFrame integer 当前pose的帧计数
+---@field currentFrame integer 当前序列的帧计数
 ---@field sequenceSize integer 序列pose总数
 ---@field poseDuration integer 当前pose时长
 ---@field hp integer 当前生命值
@@ -136,12 +136,12 @@ battle.ObjectBase = {}
 function battle.ObjectBase.fromPtr(ptr) end
 
 ---
----创建特效
+---创建对战特效
 ---@param id integer 特效ID
 ---@param x number|sokulib.Vector2f? X坐标（默认为当前物体x坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param y number? Y坐标（默认为当前物体y坐标） <br>可使用一个二维向量参数替代参数x和y
 ---@param direction? integer 朝向（1=右，-1=左，默认为物体当前朝向）
----@param layer? integer 渲染层级（默认1）
+---@param layer? integer 渲染层级（-1/1，默认1）
 ---@return guilib.Effect
 function battle.ObjectBase:createEffect(id, x, y, direction, layer) end
 
@@ -164,7 +164,7 @@ function battle.ObjectBase:setSequence(sequenceId) end
 function battle.ObjectBase:setPose(poseId) end
 ---
 ---向后推进动画帧
----@return boolean @是否到达Seq末端或为循环Seq
+---@return boolean @是否到达动作末端并绕回至起点
 function battle.ObjectBase:advanceFrame() end
 ---
 ---重置物理状态（清零速度/重力）
@@ -204,12 +204,15 @@ function battle.ObjectBase:setHitBoxData(left, top, right, bottom, angle, anchor
 ---@class battlelib.Object : battlelib.ObjectBase
 ---@field lifetime integer 是否存活（0=立即销毁，1=存活）
 ---@field layer integer 相对于角色的渲染图层（1=角色前景，-1=角色背景）
+---@field parentA battlelib.ObjectBase? A类父物体（如果有）
+---@field parentObject battlelib.Object? 父物体（如果有）
 ---@field parentObjectB battlelib.Object? 父物体（如果有）
+---@field parentPlayer battlelib.Player? 父玩家（如果有）
 ---@field parentPlayerB battlelib.Player? 父玩家（如果有）
 ---
 ---@field customData table<integer, number> 自定义数据（float数组）索引1~n <br>警告：最大索引不定，因此请确认索引无误
----@field gpShort integer[] 整型通用计数器（short数组）索引1~6
----@field gpFloat number[] 浮点型通用计数器（float数组）索引1~3
+---@field gpShort integer[] 整型通用计数器（short数组）索引1~5
+---@field gpFloat number[] 浮点型通用计数器（float数组）索引1~5
 battle.Object = {}
 ---
 ---从指针建立
@@ -244,6 +247,14 @@ function battle.Object:createChild(actionId, x, y, direction, layer, customData)
 ---@return table<integer, battlelib.Object>? @子对象表
 function battle.Object:getChildrenB() end
 ---
+---设置A类父物体（共享攻击和hitstop，常用于体术扩展/体术特效）
+---@param parentA battlelib.ObjectBase
+function battle.Object:setParentA(parentA) end
+---
+---设置父物体（无具体约束）
+---@param parentB battlelib.Object
+function battle.Object:setParentObject(parentB) end
+---
 ---处理擦弹事件（仍需手动消除弹幕）
 ---@param grazeDensity integer 最大擦弹抗性
 ---@return boolean @是否超过抗性
@@ -273,6 +284,9 @@ function battle.Object:checkTurnIntoCrystals(onlyAirHit, bigCrystals, smallCryst
 ---@param unknown integer （需要大于0，填入1即可）
 ---@param blendMode integer 混合模式（1=正常，2=滤色，3=相减，4=相乘）
 function battle.Object:setTail(actionId, width, length, unknown, blendMode) end
+---
+---移除当前拖尾
+function battle.Object:removeTail() end
 
 ---
 ---读取额外float数据<br>已过时，现推荐直接使用.customData[n]
@@ -299,6 +313,7 @@ function battle.Object:getCustomData(count) end
 ---@field comboLimit integer 连击limit（只读）
 ---@field untech integer 不可受身帧数（只读）
 ---@field skillCancelCount integer 苍天必杀取消次数
+---@field skillCancelUsed boolean[] 标记苍天必杀已使用过
 ---@field meleeInvulTimer integer 近战无敌剩余帧数
 ---@field grabInvulTimer integer 投技无敌剩余帧数
 ---@field projectileInvulTimer integer 弹幕无敌剩余帧数
@@ -315,8 +330,10 @@ function battle.Object:getCustomData(count) end
 ---
 ---@field input guilib.KeyInputLight 对战输入计数
 ---@field inputBuffered guilib.KeyInputLight 对战输入计数（缓冲）
----@field gpShort integer[] 整型通用计数器（short数组）索引1~6
----@field gpFloat number[] 浮点型通用计数器（float数组）索引1~6
+---@field gpShort integer[] 整型通用计数器（short数组）索引1~5
+---@field gpFloat number[] 浮点型通用计数器（float数组）索引1~5
+---@field actionLock integer 当前动作的被取消级（只读）
+---@field moveLock integer 当前动作的取消级（只读）
 battle.Player = {}
 ---
 ---从指针建立
@@ -328,7 +345,7 @@ function battle.Player.fromPtr(ptr) end
 ----------------------------
     ---通用处理
 ----------------------------
----
+
 ---处理地面更新
 ---@return boolean @是否因地形变化离地
 function battle.Player:applyGroundMechanics() end
@@ -356,7 +373,7 @@ function battle.Player:checkTurnAround() end
 ----------------------------
     --- 输入与动作系统
 ----------------------------
----
+
 ---获取招式取消级
 ---@param actionId integer 招式所在的动作ID
 ---@return integer @取消级
@@ -367,7 +384,7 @@ function battle.Player:getMoveLock(actionId) end
 ---@return boolean @是否成功大跳
 function battle.Player:handleHJ() end
 ---
----处理输入大跳
+---处理指令大跳（27/28/29）
 ---@param actionLock integer 当前动作被取消级
 ---@param moveCancelable integer 可移动取消
 ---@return boolean @是否成功大跳
@@ -416,12 +433,17 @@ function battle.Player:handleNormalFlight(actionLock, moveCancelable, allowedAir
 function battle.Player:handleCardSwitch() end
 ---
 ---刷新输入缓冲相关
+---@deprecated
 function battle.Player:unknown46d950() end
-
-----------------------------
-    --- 卡杀系统
-----------------------------
 ---
+---刷新方向指令缓冲（如236、44、28等）
+---通常在触发必杀后调用，但handleHJInput类和useSkill已内置
+function battle.Player:refreshCommandBuffer() end
+---
+---刷新常规按键缓冲（A, B, C, D, Spell等）
+---通常在触发常规技（体术、轻重弹幕）后调用
+function battle.Player:refreshInputBuffer() end
+
 ---获取手卡ID
 ---@param index integer 手卡索引
 ---@return integer @卡牌ID
@@ -434,49 +456,50 @@ function battle.Player:handGetId(index) end
 ---@nodiscard
 function battle.Player:handGetCost(index) end
 ---
----使用系统卡
----@param actionLock integer 动作锁定时间
----@return boolean @是否已使用
-function battle.Player:useSystemCard(actionLock) end
---
+---检测灵力是否足够（>1）
+---@return boolean @是否足够
+---@nodiscard
+function battle.Player:canSpendSpirit() end
+---
 ---检测符卡是否足够消耗
 ---@param index integer 手卡索引
 ---@return boolean @是否足够
 ---@nodiscard
 function battle.Player:canActivateCard(index) end
 ---
----使用符卡
----@param actionId integer 符卡动作ID
----@param actionLock integer 动作被取消级
-function battle.Player:useSpellCard(actionId, actionLock) end
+---使用系统卡
+---@param actionLock integer 动作锁定时间
+---@return boolean @是否已使用
+function battle.Player:useSystemCard(actionLock) end
 ---
----符卡使用事件（影响相关天气）
-function battle.Player:eventSpellUse() end
----
----检测灵力是否足够（>1）
----@return boolean @是否足够
----@nodiscard
-function battle.Player:canSpendSpirit() end
----
----使用必杀
+---跳转必杀
 ---@param actionId integer 技能动作ID
 ---@param actionLock integer 动作被取消级
 function battle.Player:useSkill(actionId, actionLock) end
 ---
+---跳转符卡
+---@param actionId integer 符卡动作ID
+---@param actionLock integer 动作被取消级
+function battle.Player:useSpellCard(actionId, actionLock) end
+---
 ---必杀使用事件（影响相关天气）
 function battle.Player:eventSkillUse() end
-
-----------------------------
-    ---弹幕创建相关
-----------------------------
 ---
----计算射击角度，存入gpFloat[6]
+---符卡使用事件（影响相关天气）
+function battle.Player:eventSpellUse() end
+---
+---引起天气预报滚动（如符卡发动时）
+function battle.Player:eventWeatherCycle() end
+
+
+---计算射击角度（副作用：结果存入float+0x7F0）
 ---@param highLimit number 角度上界
 ---@param lowLimit number 角度下界
 ---@return number @发射角度（极坐标系）
 function battle.Player:decideShotAngle(highLimit, lowLimit) end
 ---
----@deprecated 该函数命名有误；请使用decideShotAngle
+---该函数命名有误；请使用`decideShotAngle`
+---@deprecated
 function battle.Player:updateAirMovement(a1, a2) end
 ---
 ---创建对战物体
@@ -488,10 +511,6 @@ function battle.Player:updateAirMovement(a1, a2) end
 ---@param customData? string|table<integer,number>|integer|nil 初始化数据。string外的类型按以下规则转化：<br>对于table，按顺序提取其中的数值 <br>对于整数n，默认转换为{0,0,n} <br>对于nil，默认为{0,0,0}
 ---@return battlelib.Object
 function battle.Player:createObject(actionId, x, y, direction, layer, customData) end
----
---增加卡槽符力
----@param value integer 增加量（500=一张）
-function battle.Player:addCardMeter(value) end
 ---
 ---播放角色音效（区别于通用音效soku.playSE）
 ---@param sfxId integer 角色音效ID
@@ -513,8 +532,10 @@ function battle.Player:consumeSpirit(cost, delay) end
 ---@param cardNameTimer? integer 卡名显示时间（默认60帧）
 function battle.Player:consumeCard(index, costOverride, cardNameTimer) end
 ---
----引起天气预报滚动
-function battle.Player:eventWeatherCycle() end
+--增加卡槽符力
+---@param value integer 增加量（500=一张）
+function battle.Player:addCardMeter(value) end
+
 
 
 
@@ -536,7 +557,7 @@ function battle.Manager.fromPtr(ptr) end
 ----------------------------
 --- 全局函数
 ----------------------------
----
+
 ---生成随机整数（基于对战种子）
 ---@param maxPlusOne integer 随机范围限制（负数为不限）
 ---@return integer [0, maxPlusOne)范围内的随机整数
@@ -559,7 +580,42 @@ function battle.replaceCharacter(char, update, initAction, initialize) end
 ---@param update?       cbo1? 物体更新回调
 ---@param initAction?   cbo1? 物体初始化回调
 function battle.replaceObjects(char, update, initAction) end
+---
+---@alias cbe0 fun(fx: guilib.Effect, actId: integer): boolean? 无回滚数据表（SelectEffect）
+---@alias cbe1 fun(fx: guilib.Effect, actId: integer, data: table): boolean? 有回滚数据表
+---附加特效逻辑
+---@param etype guilib.EffectTypes 目标特效种类
+---@param update?       cbe1|cbe0? 特效更新回调
+---@param initAction?   cbe1|cbe0? 特效初始化回调
+function battle.replaceEffects(etype, update, initAction) end
 
+---
+---创建对战特效（无需父级物体）
+---@param id integer 特效动作Id
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为1）
+---@param layer? integer 渲染层级（-1/1，默认1）
+---@return guilib.Effect
+function battle.createEffect(id, x, y, direction, layer) end
+---
+---创建UI特效
+---@param id integer 特效动作Id
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为1）
+---@param layer? integer 渲染层级（2/1/0，默认1）
+---@return guilib.Effect
+function battle.createInfoEffect(id, x, y, direction, layer) end
+---
+---创建天气特效
+---@param id integer 特效动作Id
+---@param x number|sokulib.Vector2f X坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param y number Y坐标 <br>可使用一个二维向量参数替代参数x和y
+---@param direction? integer 朝向（1=右，-1=左，默认为1）
+---@param layer? integer 渲染层级（-2/-1/1，默认1）
+---@return guilib.Effect
+function battle.createInfoEffect(id, x, y, direction, layer) end
 
 
 return battle

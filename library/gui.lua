@@ -125,10 +125,11 @@ function gui.Cursor:pgDn() end
 
 ---值联合类型
 ---@class guilib.DesignValue
----@field gauge integer 整数值（0~100，用于<slidervert><sliderhorz>显示）
----@field number number 浮点值（用于<number>显示）
-
-
+---@field gaugeLength integer|nil 进度条值参考上限（仅对\<slidervert\>或\<sliderhorz\>可用）
+---@field gaugeOffset integer|nil 进度条值减去的偏移（仅对\<slidervert\>或\<sliderhorz\>可用）
+---@field gauge integer|nil 进度条值（仅对\<slidervert\>或\<sliderhorz\>可用）<br>插值计算公式(gauge-offset)/length
+---@field number number|nil 浮点数字（仅对\<number\>可用）
+gui.DesignValue = {}
 
 ---设计元素对象
 ---@class guilib.DesignObject
@@ -138,7 +139,7 @@ function gui.Cursor:pgDn() end
 ---@field offset sokulib.Vector2f 偏移（默认为(0,0)）
 ---@field isActive boolean 激活状态
 ---@field anchor sokulib.Vector2f|nil 锚点（仅限\<static\>元素）<br>记得判空
----@field size sokulib.Vector2f|nil 尺寸（仅限\<static\>元素）<br>记得判空
+---@field size sokulib.Vector2f|nil 边缘尺寸（仅限\<static\>元素）<br>记得判空
 ---@field scale sokulib.Vector2f|nil 缩放（仅限\<static\>元素）<br>记得判空
 ---@field rotation number|nil 旋转（仅限\<static\>元素）<br>记得判空
 gui.DesignObject = {}
@@ -148,12 +149,10 @@ gui.DesignObject = {}
 ---@return guilib.DesignObject
 ---@nodiscard
 function gui.DesignObject.fromPtr(ptr) end
-
 ---
 ---设置对象颜色
 ---@param color integer ARGB颜色值
 function gui.DesignObject:setColor(color) end
-
 ---
 ---获取动态值控制器
 ---@return guilib.DesignValue
@@ -168,23 +167,19 @@ function gui.DesignObject:getValueControl() end
 ---@class guilib.Design
 ---@overload fun():guilib.Design
 gui.Design = {}
-
 ---
 ---从指针建立
 ---@param ptr integer 指针地址
 ---@return guilib.Design
 ---@nodiscard
 function gui.Design.fromPtr(ptr) end
-
 ---
 ---加载布局文件
 ---@param layoutPath string 布局文件路径
 function gui.Design:loadResource(layoutPath) end
-
 ---
 ---清空释放布局
 function gui.Design:clear() end
-
 ---
 ---通过ID获取元素
 ---
@@ -193,31 +188,40 @@ function gui.Design:clear() end
 ---@return guilib.DesignObject
 ---@nodiscard
 function gui.Design:getItemById(id) end
-
 ---
 ---通过序号获取元素
 ---@param index integer 元素序号（从1数起）
 ---@return guilib.DesignObject
 ---@nodiscard
 function gui.Design:getItem(index) end
-
 ---
 ---获取元素总数
 ---@return integer
 ---@nodiscard
 function gui.Design:getItemCount() end
 
-
-
 ---特效对象
 ---@class guilib.Effect
----@field isAlive integer 是否存活
+---@field ptr integer 内存指针
 ---@field position sokulib.Vector2f 当前位置
 ---@field speed sokulib.Vector2f 移动速度
 ---@field gravity sokulib.Vector2f 重力加速度
 ---@field center sokulib.Vector2f 效果中心点
+---@field direction integer 方向（-1/1）
+---@field renderInfo battlelib.RenderInfo 渲染参数
+---@field isGui boolean 是否按窗口坐标渲染
+---@field lifetime integer 是否存活（0=销毁，1=存续）
+---@field layer integer 渲染图层<br>- 对于对战：-1/1 <br>- 对于gui.Renderer创建的：不限
+---@field parent battlelib.ObjectBase|nil 创建者（仅限BattleEffect）
+---
+---@field actionId integer 当前动作ID
+---@field sequenceId integer 动作序列ID
+---@field poseId integer 当前poseID
+---@field sequenceSize integer 序列pose总数
+---@field poseFrame integer 当前pose的帧计数
+---@field poseDuration integer 当前pose时长
+---@field currentFrame integer 当前序列的帧计数
 gui.Effect = {}
-
 ---
 ---设置动作序列
 ---@param actionId integer 动作ID
@@ -232,6 +236,10 @@ function gui.Effect:setAction(actionId) end
 ---@param sequenceId integer 序列ID
 function gui.Effect:setSequence(sequenceId) end
 ---
+---向后推进动画帧
+---@return boolean @是否到达动作末端并绕回至起点
+function gui.Effect:advanceFrame() end
+---
 ---重置当前序列到初始状态
 function gui.Effect:resetSequence() end
 ---
@@ -239,6 +247,7 @@ function gui.Effect:resetSequence() end
 function gui.Effect:prevSequence() end
 ---
 ---跳转至下一动作序列
+---@return boolean @是否到达动作末端并绕回至起点
 function gui.Effect:nextSequence() end
 ---
 ---设置当前姿势
@@ -249,28 +258,37 @@ function gui.Effect:setPose(poseId) end
 function gui.Effect:prevPose() end
 ---
 ---切换至下一姿势
+---@return boolean @是否到达序列末端并绕回至起点
 function gui.Effect:nextPose() end
-
+---
+---@enum guilib.EffectTypes 特效类别
+---@diagnostic disable-next-line: missing-fields
+gui.Effect = {
+    SelectEffect = 0, -- 选人界面动画
+    BattleEffect = 1, -- 通用对战特效
+    InfoEffect = 2,   -- UI特效（天气播报等）
+    WeatherEffect = 3,-- 天气视觉特效
+}
 
 
 ---特效资源管理器
 ---@class guilib.EffectManager
 gui.EffectManager = {}
-
 ---
 ---加载特效pat资源
 ---@param patternPath string 特效pat文件路径
 ---@param reserve? integer effect容器预分配大小（默认0）
 function gui.EffectManager:loadResource(patternPath, reserve) end
-
 ---
 ---清空所有资源（清除加载的pat数据和特效实例）
 function gui.EffectManager:clear() end
-
 ---
 ---仅清除当前所有特效实例（保留加载的pat数据）
 function gui.EffectManager:clearEffects() end
-
+---
+---@alias cbe3 fun(fx: guilib.Effect):boolean?
+---@param callback cbe3 逐帧更新逻辑
+function gui.EffectManager:setUpdater(callback) end
 
 
 ---图形渲染控制器

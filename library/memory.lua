@@ -45,6 +45,14 @@ function memory.readdouble(address) end
 function memory.readbytes(address, size) end
 
 ---
+---读取布尔值
+---@param address integer 内存地址
+---@return boolean
+---@nodiscard
+function memory.readbool(address) end
+
+
+---
 ---写入32位整数
 ---@param address integer 内存地址
 ---@param value integer 要写入的值
@@ -73,6 +81,12 @@ function memory.writedouble(address, value) end
 ---@param address integer 起始地址
 ---@param bytes string 数据字节串
 function memory.writebytes(address, bytes) end
+
+---
+---写入布尔值
+---@param address integer 内存地址
+---@param value boolean 布尔值
+function memory.writebool(address, value) end
 
 ----------------------------
 -- 自定义函数调用系统
