@@ -286,8 +286,7 @@ function gui.EffectManager:clear() end
 ---仅清除当前所有特效实例（保留加载的pat数据）
 function gui.EffectManager:clearEffects() end
 ---
----@alias cbe3 fun(fx: guilib.Effect):boolean?
----@param callback cbe3 逐帧更新逻辑
+---@param callback cbe0 逐帧更新逻辑
 function gui.EffectManager:setUpdater(callback) end
 
 

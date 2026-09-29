@@ -164,6 +164,9 @@ resource.SoundInstance = {}
 ---播放一次音频
 function resource.SoundInstance:play() end
 
+---停止正在播放的音频
+function resource.SoundInstance:stop() end
+
 ----------------------------
 -- 全局函数
 ----------------------------
